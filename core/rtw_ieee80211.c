@@ -826,6 +826,18 @@ int rtw_rsne_info_parse(const u8 *ie, uint ie_len, struct rsne_info *info)
 	info->gmcs = (u8 *)pos;
 
 exit:
+    if (!info->pmkid_list) {
+        /* We need to write a proper memory address into the struct,
+         * since the function rtw_restruct_sec_ie will attempt to write a
+         * PMKID into an RSN IE even if it didn't originally contain one.
+         * If the parsed IE did not contain PMKID information, we set the
+         * PMKID list pointer to point to the end of the IE, where the PMKID
+         * field would be if it existed. This will not cause memory corruption,
+         * since the IE packet is always allocated for the maximum possible length,
+         * which is not achieved when PMKID fields are missing. */
+        info->pmkid_cnt = 0;
+        info->pmkid_list = (u8 *) pos + 2;
+    }
 	return _SUCCESS;
 
 err:
